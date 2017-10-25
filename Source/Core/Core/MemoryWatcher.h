@@ -5,9 +5,7 @@
 #pragma once
 
 #include <map>
-#ifdef _WIN32
-#include <Windows.h>
-#else
+#ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/un.h>
 #endif
@@ -44,8 +42,8 @@ private:
   bool m_running;
 
 #ifdef _WIN32
-  HANDLE m_pipe;
-  DWORD m_written;
+  void* m_pipe;
+  unsigned long m_written;
 #else
   int m_fd;
   sockaddr_un m_addr;

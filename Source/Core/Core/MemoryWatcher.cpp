@@ -6,7 +6,10 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-#ifndef _WIN32
+#ifdef _WIN32
+#include <fileapi.h>
+#include <handleapi.h>
+#else
 #include <unistd.h>
 #endif
 
@@ -93,10 +96,7 @@ bool MemoryWatcher::OpenSocket(const std::string& path)
   m_pipe = CreateFile(L"\\\\.\\pipe\\Dolphin Emulator\\MemoryWatcher",
     GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
-  if (m_pipe == INVALID_HANDLE_VALUE)
-    return false;
-  else
-    return true;
+  return m_pipe != INVALID_HANDLE_VALUE;
 #else
   memset(&m_addr, 0, sizeof(m_addr));
   m_addr.sun_family = AF_UNIX;
