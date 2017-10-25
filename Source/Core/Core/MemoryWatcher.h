@@ -5,9 +5,15 @@
 #pragma once
 
 #include <map>
+#ifdef _WIN32
+#include <Windows.h>
+#else
 #include <sys/socket.h>
 #include <sys/un.h>
+#endif
 #include <vector>
+
+#include "Common/CommonTypes.h"
 
 // MemoryWatcher reads a file containing in-game memory addresses and outputs
 // changes to those memory addresses to a unix domain socket as the game runs.
@@ -37,8 +43,13 @@ private:
 
   bool m_running;
 
+#ifdef _WIN32
+  HANDLE m_pipe;
+  DWORD m_written;
+#else
   int m_fd;
   sockaddr_un m_addr;
+#endif
 
   // Address as stored in the file -> list of offsets to follow
   std::map<std::string, std::vector<u32>> m_addresses;

@@ -6,7 +6,9 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 #include "Common/FileUtil.h"
 #include "Core/CoreTiming.h"
@@ -53,7 +55,11 @@ MemoryWatcher::~MemoryWatcher()
     return;
 
   m_running = false;
+#ifdef _WIN32
+  CloseHandle(m_pipe);
+#else
   close(m_fd);
+#endif
 }
 
 bool MemoryWatcher::LoadAddresses(const std::string& path)
@@ -83,12 +89,22 @@ void MemoryWatcher::ParseLine(const std::string& line)
 
 bool MemoryWatcher::OpenSocket(const std::string& path)
 {
+#ifdef _WIN32
+  m_pipe = CreateFile(L"\\\\.\\pipe\\Dolphin Emulator\\MemoryWatcher",
+    GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+
+  if (m_pipe == INVALID_HANDLE_VALUE)
+    return false;
+  else
+    return true;
+#else
   memset(&m_addr, 0, sizeof(m_addr));
   m_addr.sun_family = AF_UNIX;
   strncpy(m_addr.sun_path, path.c_str(), sizeof(m_addr.sun_path) - 1);
 
   m_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
   return m_fd >= 0;
+#endif
 }
 
 u32 MemoryWatcher::ChasePointer(const std::string& line)
@@ -122,8 +138,15 @@ void MemoryWatcher::Step()
       // Update the value
       current_value = new_value;
       std::string message = ComposeMessage(address, new_value);
+#ifdef _WIN32
+      if (m_pipe != INVALID_HANDLE_VALUE)
+        WriteFile(m_pipe, message.c_str(), static_cast<DWORD>(message.size() + 1), &m_written,
+          nullptr);
+#else
       sendto(m_fd, message.c_str(), message.size() + 1, 0, reinterpret_cast<sockaddr*>(&m_addr),
-             sizeof(m_addr));
+        sizeof(m_addr));
+#endif
     }
   }
 }
+
