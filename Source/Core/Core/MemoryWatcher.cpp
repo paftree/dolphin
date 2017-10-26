@@ -93,8 +93,8 @@ void MemoryWatcher::ParseLine(const std::string& line)
 bool MemoryWatcher::OpenSocket(const std::string& path)
 {
 #ifdef _WIN32
-  m_pipe = CreateFile(L"\\\\.\\pipe\\Dolphin Emulator\\MemoryWatcher",
-    GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  m_pipe = CreateFile(L"\\\\.\\pipe\\Dolphin Emulator\\MemoryWatcher", GENERIC_READ | GENERIC_WRITE,
+                      0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
   return m_pipe != INVALID_HANDLE_VALUE;
 #else
@@ -141,10 +141,10 @@ void MemoryWatcher::Step()
 #ifdef _WIN32
       if (m_pipe != INVALID_HANDLE_VALUE)
         WriteFile(m_pipe, message.c_str(), static_cast<DWORD>(message.size() + 1), &m_written,
-          nullptr);
+                  nullptr);
 #else
       sendto(m_fd, message.c_str(), message.size() + 1, 0, reinterpret_cast<sockaddr*>(&m_addr),
-        sizeof(m_addr));
+             sizeof(m_addr));
 #endif
     }
   }
